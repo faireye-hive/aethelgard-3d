@@ -5,7 +5,10 @@ export const VERSION = 1;
 const P = (id,label,shape,pos,size,color,pivot='') => ({id,label,shape,pos,size,color,pivot,rot:[0,0,0]});
 export const ASSET_NAMES = {
   player:'Aventureiro', tree:'Árvore', rock:'Pedra', castle:'Castelo',
-  city:'Cidade', port:'Porto', ruins:'Ruínas'
+  city:'Cidade', port:'Porto', ruins:'Ruínas',
+  tree_oak:'Carvalho', tree_pine:'Pinheiro', tree_birch:'Bétula',
+  tree_willow:'Salgueiro', tree_palm:'Palmeira', tree_cherry:'Cerejeira',
+  tree_dead:'Árvore seca'
 };
 export const ASSET_ORDER = Object.keys(ASSET_NAMES);
 export const DEFAULT_ASSETS = {
@@ -78,16 +81,99 @@ export const DEFAULT_ASSETS = {
   P('broken','Entulho','rock',[.5,.3,1],[1.15,.57,.77],'#9a9d8d')
  ]}
 };
+// Modelos de árvores com ramificações e copas desenhadas por peças editáveis.
+// Cada galho e conjunto de folhas pode ser movido, redimensionado, girado ou recolorido.
+function limb(id,name,xyz,size,color,rot=[0,0,0]){
+ const p=P(id,name,'branch',xyz,size,color);p.rot=rot;return p;
+}
+function foliage(id,xyz,size,color,shape='leaf',rot=[0,0,0]){
+ const p=P(id,'Copa '+id,shape,xyz,size,color);p.rot=rot;return p;
+}
+function wood(id,xyz,size,color){return P(id,'Tronco '+id,'branch',xyz,size,color)}
+const ring=(count,r,y,color,shape='leaf',sx=1.65,sy=1.10)=>{
+ const out=[];for(let i=0;i<count;i++){
+  const a=i/count*Math.PI*2,phase=i*.91;
+  out.push(foliage('foliage_'+y+'_'+i,[Math.cos(a)*r,y+Math.sin(phase)*.29,Math.sin(a)*r],
+   [sx*(.82+(i%3)*.08),sy*(.9+(i%2)*.12),sx*(.82+(i%2)*.09)],color[i%color.length],shape));
+ }return out;
+};
+DEFAULT_ASSETS.tree_oak={scale:1,axes:[1,1,1],parts:[
+ wood('trunk',[0,1.5,0],[.84,3,.80],'#73543e'),
+ limb('branchLeft','Galho esquerdo',[-.72,3.1,0],[.47,2.0,.48],'#73543e',[0,0,-48]),
+ limb('branchRight','Galho direito',[.80,3.0,.19],[.48,2.2,.45],'#73543e',[0,0,44]),
+ limb('branchBack','Galho traseiro',[.07,3.15,-.78],[.42,1.83,.42],'#73543e',[-50,0,0]),
+ ...ring(8,1.45,3.9,['#487d40','#5c9149','#396f42','#6a9f58'],'leaf',1.65,1.4),
+ foliage('crownTop',[0,5.1,0],[2.8,1.8,2.7],'#4d8946')
+]};
+DEFAULT_ASSETS.tree_pine={scale:1,axes:[1,1,1],parts:[
+ wood('trunk',[0,2.55,0],[.46,5.1,.45],'#755842'),
+ ...[0,1,2,3,4].flatMap((level)=>{
+  const y=1.10+level*.87,r=(2.4-level*.36),color=['#224f42','#2c634c','#397451','#20584a'][level%4];
+  return [foliage('needle'+level,[0,y+.22,0],[r,2.0-level*.12,r],color,'cone')]
+ }),
+ foliage('needleTop',[0,5.5,0],[.8,1.4,.8],'#377658','cone')
+]};
+DEFAULT_ASSETS.tree_birch={scale:1,axes:[1,1,1],parts:[
+ wood('whiteTrunk',[0,2.45,0],[.45,4.9,.43],'#e6e1d3'),
+ ...[.55,1.0,1.47,2.12,2.75,3.25].map((y,i)=>foliage('bark'+i,[0,y,.01],[.49,.07,.49],'#666766','cylinder')),
+ limb('branchLeft','Galho esquerdo',[-.68,3.1,0],[.26,1.80,.28],'#eee9df',[0,0,-53]),
+ limb('branchRight','Galho direito',[.73,3.43,.10],[.29,1.74,.30],'#eee9df',[0,0,54]),
+ ...ring(6,.90,4.32,['#8fb967','#74a658','#a7c979','#689d56'],'leaf',1.10,1.0),
+ foliage('topLeaf',[0,5.38,0],[1.55,1.28,1.42],'#90bb70')
+]};
+DEFAULT_ASSETS.tree_willow={scale:1,axes:[1,1,1],parts:[
+ wood('trunk',[0,1.75,0],[.69,3.5,.65],'#79644c'),
+ ...[0,1,2,3,4,5].map(i=>{
+  const a=i*Math.PI/3;return limb('willowBranch'+i,'Galho pendente '+i,[Math.cos(a)*1.02,3.37,Math.sin(a)*1.02],
+  [.24,2.22,.25],'#836b4d',[Math.sin(a)*60,0,-Math.cos(a)*60])
+ }),
+ ...[0,1,2,3,4,5,6,7,8,9].map(i=>{
+  const a=i*Math.PI/5;const p=foliage('drape'+i,[Math.cos(a)*1.65,2.6,Math.sin(a)*1.65],
+  [.47,2.6,.48],['#56955b','#699e5c','#4f8757'][i%3],'cone');
+  p.rot=[Math.sin(a)*13,0,-Math.cos(a)*13];return p;
+ }),
+ foliage('crown',[0,4.2,0],[2.8,1.25,2.8],'#71a965')
+]};
+DEFAULT_ASSETS.tree_palm={scale:1,axes:[1,1,1],parts:[
+ wood('trunkBase',[0,.87,0],[.40,1.74,.42],'#ad8058'),
+ limb('trunkBend','Tronco inclinado',[.21,2.35,0],[.34,1.45,.34],'#b58b5b',[0,0,-17]),
+ limb('trunkTop','Caule superior',[.43,3.62,0],[.31,1.4,.30],'#a57b50',[0,0,7]),
+ ...Array.from({length:9},(_,i)=>{
+  const a=i*Math.PI*2/9,dist=i%2?.98:1.16;
+  const p=foliage('frond'+i,[.43+Math.cos(a)*dist,4.33+Math.sin(i*2)*.16,Math.sin(a)*dist],
+   [.56,3.2,.40],['#438d55','#5da45d','#377a4b'][i%3],'frond');
+  p.rot=[Math.sin(a)*67,Math.cos(a)*12,-Math.cos(a)*67];return p
+ }),
+ foliage('coconut1',[.25,4.35,.21],[.40,.4,.39],'#77573a','sphere'),
+ foliage('coconut2',[.62,4.28,.09],[.36,.38,.36],'#6c563b','sphere')
+]};
+DEFAULT_ASSETS.tree_cherry={scale:1,axes:[1,1,1],parts:[
+ wood('trunk',[0,1.57,0],[.56,3.13,.55],'#6c4b4a'),
+ limb('branchLeft','Galho esquerdo',[-.75,2.92,0],[.28,1.8,.28],'#785450',[0,0,-52]),
+ limb('branchRight','Galho direito',[.86,2.94,.18],[.30,1.9,.27],'#795050',[0,0,50]),
+ ...ring(9,1.25,3.85,['#e8a1b9','#eec2d0','#dfa0b0','#f1c8ce'],'leaf',1.45,1.15),
+ foliage('topBlossom',[0,4.7,0],[2.05,1.33,2.05],'#f1b0c4')
+]};
+DEFAULT_ASSETS.tree_dead={scale:1,axes:[1,1,1],parts:[
+ wood('dryTrunk',[0,1.82,0],[.57,3.62,.53],'#76716a'),
+ ...[0,1,2,3,4,5].map(i=>{
+  const a=i*2.399,rad=1.03+(i%2)*.27;
+  return limb('dryBranch'+i,'Galho seco '+i,[Math.cos(a)*rad,2.4+i*.30,Math.sin(a)*rad],
+  [.19,1.5+(i%2)*.25,.22],'#777169',[Math.sin(a)*52,0,-Math.cos(a)*52])
+ }),
+ foliage('brokenTip',[.08,3.85,-.08],[.34,.65,.38],'#827a70','cone')
+]};
+
 export function cloneDefaults(){return JSON.parse(JSON.stringify(DEFAULT_ASSETS))}
 export function cloneCatalog(value){return JSON.parse(JSON.stringify(value))}
 const goodNumber=(x,min,max)=>typeof x==='number'&&Number.isFinite(x)&&x>=min&&x<=max;
 const vec=(x,min,max)=>Array.isArray(x)&&x.length===3&&x.every(v=>goodNumber(v,min,max));
-const shapes=new Set(['box','cone','cylinder','sphere','rock']);
+const shapes=new Set(['box','cone','cylinder','sphere','rock','branch','leaf','frond']);
 export function validateCatalog(data){
  if(!data||typeof data!=='object'||data.version!==VERSION||!data.assets||typeof data.assets!=='object')throw new Error('Formato incorreto. Use um catálogo Aethelgard versão 1.');
  const ret={version:VERSION,assets:{}};
  for(const key of ASSET_ORDER){
-  const item=data.assets[key];
+  const item=data.assets[key]||DEFAULT_ASSETS[key]; // Reaproveita projetos exportados antes de existirem variantes
   if(!item||!goodNumber(item.scale,.05,20)||!vec(item.axes,.05,10)||!Array.isArray(item.parts)||item.parts.length<1||item.parts.length>80)throw new Error('Modelo inválido: '+key);
   const ids=new Set;
   for(const part of item.parts){
@@ -106,7 +192,10 @@ export function loadCatalog(){
 export function saveCatalog(catalog){const valid=validateCatalog(catalog);localStorage.setItem(STORAGE_KEY,JSON.stringify(valid));return valid}
 function geo(shape,THREE){
  switch(shape){
-  case 'cone':return new THREE.ConeGeometry(.5,1,6);
+  case 'cone':return new THREE.ConeGeometry(.5,1,8);
+  case 'frond':return new THREE.ConeGeometry(.5,1,5);
+  case 'branch':return new THREE.CylinderGeometry(.24,.5,1,7);
+  case 'leaf':return new THREE.IcosahedronGeometry(.57,1);
   case 'cylinder':return new THREE.CylinderGeometry(.5,.5,1,8);
   case 'sphere':return new THREE.SphereGeometry(.5,12,8);
   case 'rock':return new THREE.DodecahedronGeometry(.62,0);
@@ -136,6 +225,7 @@ export function createAsset(kind,catalog,THREE){
 // Floresta procedural eficiente: 1 InstancedMesh por peça do modelo.
 export function createScatter(kind,catalog,THREE,points){
  const config=catalog.assets[kind],outer=new THREE.Group;
+ if(!config||!points.length)return outer;
  const o=new THREE.Object3D,partMatrix=new THREE.Matrix4,outerMatrix=new THREE.Matrix4;
  const euler=new THREE.Euler,position=new THREE.Vector3,size=new THREE.Vector3;
  for(const part of config.parts){
