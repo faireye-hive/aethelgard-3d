@@ -26,8 +26,9 @@ jobs:
           node --check src/app.js
           node --check src/seed.js
           node --check src/assets.js
+          node --check src/forest.js
           node --check src/asset-editor.js
-          node --test tests/assets.test.mjs
+          node --test tests/assets.test.mjs tests/forest.test.mjs
           node --input-type=module -e "import('./src/seed.js').then(async m => { const w = await m.loadSeed(); if(w.biome.length!==14112||w.height.length!==14112||w.objects.length<1) process.exit(1); console.log('Mapa carregado', w.cols, w.rows) })"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
