@@ -3,8 +3,8 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {ASSET_NAMES,ASSET_ORDER,DEFAULT_ASSETS,loadCatalog,saveCatalog,validateCatalog,cloneCatalog,createAsset} from './assets.js';
 
 const $=id=>document.getElementById(id), fmt=x=>Number(x).toFixed(2).replace(/\.?0+$/,'');
-const ICONS={player:'🧍',tree:'🌲',rock:'🪨',castle:'🏰',city:'🏘',port:'⚓',ruins:'🏛'};
-const KIND={player:'Herói',tree:'Natureza',rock:'Natureza',castle:'Construções',city:'Construções',port:'Construções',ruins:'Construções'};
+const ICONS={player:'🧍',tree:'🌲',tree_oak:'🌳',tree_pine:'🌲',tree_birch:'🌿',tree_willow:'🍃',tree_palm:'🌴',tree_cherry:'🌸',tree_dead:'🍂',rock:'🪨',castle:'🏰',city:'🏘',port:'⚓',ruins:'🏛'};
+const KIND={player:'Herói',tree:'Coníferas',tree_oak:'Árvore frondosa',tree_pine:'Coníferas',tree_birch:'Árvore frondosa',tree_willow:'Árvore frondosa',tree_palm:'Árvore tropical',tree_cherry:'Árvore florida',tree_dead:'Árvore seca',rock:'Natureza',castle:'Construções',city:'Construções',port:'Construções',ruins:'Construções'};
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 let catalog=loadCatalog(),selected='player',selectedPart='body',history=[],future=[];
 let renderer,scene,camera,controls,model,modelParts={},previewGroup,outline,ground,grid;
