@@ -2,12 +2,14 @@
 // Os elementos removidos do bosque procedural são registrados em clearedTrees;
 // assim a remoção não destrói o bioma de floresta.
 export const TREE_TYPES = ['tree','tree_oak','tree_pine','tree_birch','tree_willow','tree_palm','tree_cherry','tree_dead'];
+export const REALISTIC_OAK='oak_realistic';
+export const MAX_REALISTIC_OAKS=12;
 export const TREE_LABELS = {
  tree:'Abeto clássico',tree_oak:'Carvalho',tree_pine:'Pinheiro',
  tree_birch:'Bétula',tree_willow:'Salgueiro',
- tree_palm:'Palmeira',tree_cherry:'Cerejeira',tree_dead:'Árvore seca'
+ tree_palm:'Palmeira',tree_cherry:'Cerejeira',tree_dead:'Árvore seca',oak_realistic:'Carvalho realista'
 };
-export const isTreeType = kind => TREE_TYPES.includes(kind);
+export const isTreeType = kind => kind===REALISTIC_OAK||TREE_TYPES.includes(kind);
 export const hashCell = (x,y,salt=0) => {
  let n=Math.imul(x+salt+1,374761393)^Math.imul(y+17,668265263);
  n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295;
@@ -33,6 +35,7 @@ export function hasTree(world,x,y){
 }
 export function plantTrees(world,p,kind,{radius=1,density='single'}={}){
  if(!isTreeType(kind))return 0;
+ if(kind===REALISTIC_OAK){density='single';radius=1;if(world.objects.filter(o=>o.type===REALISTIC_OAK).length>=MAX_REALISTIC_OAKS)return 0;}
  if(world.objects.length>=10000)return 0;
  const cleared=clearTreeIndexes(world);
  const placed=new Set(world.objects.filter(o=>isTreeType(o.type)).map(o=>{
