@@ -60,3 +60,21 @@ Para plantar e remover árvores, abra **Editor** na tela do mundo:
 Arquivos principais: `src/forest.js` contém as regras de pintura e remoção; `src/assets.js` define as 8 espécies; `tests/forest.test.mjs` valida plantio, remoção, densidade e persistência.
 
 **Observação sobre GitHub Pages**: se a página não abrir, entre em `Settings → Pages → Build and deployment → Source: GitHub Actions` neste repositório. A integração disponível não tem permissão para habilitar Pages por conta própria. Após a ativação, execute **Actions → Publicar Aethelgard 3D no GitHub Pages → Run workflow**. A validação do código no CI funciona mesmo quando Pages está desabilitado.
+
+## 🌳 Carvalho realista procedural — Experimento 01
+
+O projeto agora conta com um **carvalho maduro experimental** criado inteiramente com código. Abra o laboratório em **[oak-realistic.html](./oak-realistic.html)**, ou na versão publicada: https://faireye-hive.github.io/aethelgard-3d/oak-realistic.html
+
+O novo modelo é um asset separado dos oito tipos anteriores. Os diferenciais são:
+- Raízes afloradas que se espalham sobre o solo.
+- Tronco curvo com sulcos de casca representados na própria geometria e cores por vértice.
+- Galhos estruturais com afinamento progressivo, subdivididos em galhos menores e pontos terminais.
+- **Folhas individuais em malha 3D lobada** (sem planos com imagem transparente ou texturas externas), cada uma com variação de posição, cor, inclinação e tamanho.
+- Geometria dos galhos combinada em uma malha e folhas com `THREE.InstancedMesh` para reduzir draw calls.
+- Geração determinística por semente e duas qualidades: detalhada no laboratório e econômica no mundo.
+
+O laboratório permite alterar semente, altura, largura de copa, espessura do tronco, quantidade de galhos, densidade e tamanho das folhas, cor da folhagem, cor da casca e estação. Use **Exportar carvalho.json** para compartilhar só os parâmetros; o arquivo pode ser importado no próprio laboratório.
+
+**Para plantar no mapa:** abra o editor, selecione **Plantar árvore → Carvalho realista 3D** e clique num local de terra. Por segurança de desempenho, essa variante é plantada individualmente e tem limite de 12 exemplares simultâneos no mapa. As florestas automáticas e outras espécies seguem usando seus modelos leves. O editor mantém os carvalhos realistas no JSON do mapa e o backup **Exportar projeto completo** inclui também a configuração do gerador.
+
+O renderizador usa Three.js 0.187.0 e não necessita de Blender. Não é um modelo fotogramétrico e ainda não possui animação do vento, mas agora serve como base para gerar vegetação de qualidade bem superior. O algoritmo empregado é uma ramificação hierárquica com variação orgânica, não uma implementação completa de colonização espacial. Estudos como Runions et al. (2007), *Modeling Trees with a Space Colonization Algorithm*, podem orientar versões futuras com ainda mais realismo.
