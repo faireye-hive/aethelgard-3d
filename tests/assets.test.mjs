@@ -57,7 +57,7 @@ check('geometria compartilhada gera as peças e pivôs animáveis',()=>{
 check('o mundo usa o catálogo de assets e contém link para editor',()=>{
  const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
- assert.ok(app.includes("createScatter('tree'")&&app.includes("createAsset('player'")&&app.includes("assetCatalog=loadCatalog()"));
+ assert.ok(app.includes("for(const kind of TREE_TYPES)")&&app.includes("createAsset('player'")&&app.includes("assetCatalog=loadCatalog()"));
  assert.ok(html.includes('href="./asset-editor.html"'));
 });
 
