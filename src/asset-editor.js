@@ -18,7 +18,7 @@ function save(){try{catalog=saveCatalog(catalog);$('saveStatus').textContent='â—
 function beforeChange(){return JSON.stringify(catalog)}
 function record(before){const after=JSON.stringify(catalog);if(before===after)return;history.push(before);if(history.length>40)history.shift();future=[];updateHistory()}
 function updateHistory(){$('undo').disabled=!history.length;$('redo').disabled=!future.length}
-function mutate(fn){finalizeEdit();const before=beforeChange();fn();record(before);save();refresh()}
+function mutate(fn){finalizeEdit();const before=beforeChange();fn();record(before);save();selectAsset(selected,false)}
 function finalizeEdit(){if(!activeEdit)return;const before=lastSnapshot;activeEdit=false;lastSnapshot=null;if(before)record(before)}
 function beginEdit(){if(!activeEdit){activeEdit=true;lastSnapshot=beforeChange()}}
 function applyInput(){save();rebuildPreview(false);renderPartList();renderCode()}
