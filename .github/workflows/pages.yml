@@ -21,6 +21,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Instalar Three.js para testes geométricos
+        run: npm install --no-save --no-package-lock --no-audit --no-fund three@0.187.0
       - name: Validar JavaScript e mapa
         run: |
           node --check src/app.js
@@ -28,7 +30,9 @@ jobs:
           node --check src/assets.js
           node --check src/forest.js
           node --check src/asset-editor.js
-          node --test tests/assets.test.mjs tests/forest.test.mjs
+          node --check src/oak-realistic.js
+          node --check src/oak-studio.js
+          node --test tests/assets.test.mjs tests/forest.test.mjs tests/oak.test.mjs
           node --input-type=module -e "import('./src/seed.js').then(async m => { const w = await m.loadSeed(); if(w.biome.length!==14112||w.height.length!==14112||w.objects.length<1) process.exit(1); console.log('Mapa carregado', w.cols, w.rows) })"
       - name: Verificar se GitHub Pages foi habilitado
         id: pages
@@ -41,6 +45,8 @@ jobs:
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             echo "::notice::GitHub Pages está desabilitado. Vá em Settings > Pages > Build and deployment e escolha GitHub Actions. Depois execute o workflow novamente."
           fi
+      - name: Remover dependências de desenvolvimento do artefato
+        run: rm -rf node_modules
       - uses: actions/configure-pages@v5
         if: steps.pages.outputs.enabled == 'true'
       - uses: actions/upload-pages-artifact@v3
