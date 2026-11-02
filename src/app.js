@@ -3,7 +3,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {loadSeed} from './seed.js';
 import {loadCatalog,saveCatalog,validateCatalog,createAsset,createScatter} from './assets.js';
 import {TREE_TYPES,TREE_LABELS,isTreeType,autoTreeAt,clearTreeIndexes,plantTrees,eraseTrees,REALISTIC_OAK,MAX_REALISTIC_OAKS} from './forest.js';
-import {createRealisticOak,getOakOptions,OAK_STORAGE_KEY} from './oak-realistic.js';
+import {createRealisticOak,getOakOptions,saveOakOptions,oakOptions,OAK_STORAGE_KEY} from './oak-realistic.js';
 const $=id=>document.getElementById(id),palette=['#317fa0','#a5b777','#4a7750','#918e86','#dfb676','#dce4db','#c9b68d'];
 const names=['Mar','Pradaria','Floresta','Montanhas','Deserto','Neve','Planícies'];
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.82});
@@ -133,7 +133,7 @@ function events(){
  $('overview').onclick=()=>{camera.position.set(0,97,135);controls.target.set(0,0,0);follow=false;$('follow').classList.remove('active')};
  $('export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(world,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='aethelgard-world.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
  $('exportProject').onclick=()=>{
-  const payload={format:'aethelgard-project',version:1,world,assets:assetCatalog};
+  const payload={format:'aethelgard-project',version:1,world,assets:assetCatalog,realisticOak:getOakOptions()};
   const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
   const a=document.createElement('a');a.href=url;a.download='aethelgard-projeto-completo.json';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);tell('Projeto completo exportado: mapa e modelos 3D');
@@ -142,8 +142,10 @@ function events(){
  const packageFile=parsed?.format==='aethelgard-project'&&parsed.version===1;
  const w=validate(packageFile?parsed.world:parsed);
  const newCatalog=packageFile?validateCatalog(parsed.assets):null;
+ const importedOak=packageFile&&parsed.realisticOak?oakOptions(parsed.realisticOak):null;
  history.push(JSON.stringify(world));redoStack=[];world=w;
  if(newCatalog){assetCatalog=saveCatalog(newCatalog);createHero();}
+ if(importedOak)saveOakOptions(importedOak);
  else spawnHero();
  rebuild();state();tell(packageFile?'Mapa e modelos 3D importados':'Mapa importado')}catch(err){tell(err.message)}e.target.value=''};
  $('reset').onclick=()=>{if(!confirm('Restaurar o mundo inicial? Exporte o mapa editado antes.'))return;history.push(JSON.stringify(world));redoStack=[];world=structuredClone(seed);spawnHero();rebuild();state()};
