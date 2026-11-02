@@ -33,3 +33,15 @@ No editor, altere o bioma, eleve, rebaixe e suavize o terreno; adicione cidades,
 - `.github/workflows/pages.yml`: validação e publicação.
 
 **Limitações**: este é um protótipo inicial, não um RPG completo. O mapa foi estimado a partir de uma imagem ilustrada e ainda precisa de correções manuais; os locais têm modelos geométricos simples. A travessia marítima, NPCs, sistema de combate e missões ainda não existem. Os dados não contêm a arte original do atlas, apenas sua reconstrução procedural. A ilustração fornecida pelo autor não é licenciada para terceiros.
+
+## Estúdio de Assets 3D
+
+Abra **[asset-editor.html](./asset-editor.html)**, disponível também pelo botão **Assets 3D** no topo do jogo, ou acesse diretamente a página publicada: https://faireye-hive.github.io/aethelgard-3d/asset-editor.html
+
+Cada categoria (aventureiro, árvore, pedra, castelo, cidade, porto e ruínas) possui editor independente, com prévia 3D e seleção de peças. É possível editar escala geral, proporções X/Y/Z, posição/rotação/dimensões/cor/formato de cada peça, adicionar/duplicar/excluir peças, ajustar tamanho do personagem e visualizar animação de braços/pernas. Os modelos são geométricos e o catálogo é compartilhado entre o editor e o jogo.
+
+**Para voltar ao mundo:** as edições são guardadas em `localStorage` sob `aethelgard-assets-v1`, por isso devem ser usadas no mesmo navegador/origem da versão publicada. Recarregue o jogo após editar, ou mantenha-o em outra aba para receber mudanças pelo evento de armazenamento.
+
+**Para mandar alterações ao ChatGPT:** clique **Exportar catálogo JSON** e anexe `aethelgard-assets.json` nesta conversa. O botão **Exportar código JavaScript** também gera o catálogo em formato JS legível. O JSON pode ser importado no próprio editor. Exportar não cria automaticamente um commit no GitHub; o arquivo enviado aqui permite integrar os modelos revisados como padrões do projeto. Antes de limpar dados do navegador, guarde uma cópia do JSON.
+
+O personagem agora começa em **55% da escala do antigo protótipo**; ajuste pelo controle **Tamanho geral** no Estúdio.
