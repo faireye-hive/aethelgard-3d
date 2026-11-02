@@ -45,3 +45,18 @@ Cada categoria (aventureiro, árvore, pedra, castelo, cidade, porto e ruínas) p
 **Para mandar alterações ao ChatGPT:** clique **Exportar catálogo JSON** e anexe `aethelgard-assets.json` nesta conversa. O botão **Exportar código JavaScript** também gera o catálogo em formato JS legível. O JSON pode ser importado no próprio editor. Exportar não cria automaticamente um commit no GitHub; o arquivo enviado aqui permite integrar os modelos revisados como padrões do projeto. Antes de limpar dados do navegador, guarde uma cópia do JSON.
 
 O personagem agora começa em **55% da escala do antigo protótipo**; ajuste pelo controle **Tamanho geral** no Estúdio.
+
+## 🌳 Florestas procedurais e pincel de árvores
+
+O mundo agora usa **8 espécies editáveis**, com peças independentes no Estúdio: abeto clássico, carvalho, pinheiro, bétula, salgueiro, palmeira, cerejeira e árvore seca. Cada modelo tem galhos, copa e folhagem procedural, com geometria instanciada para reduzir o número de chamadas ao renderizador em grandes florestas.
+
+Para plantar e remover árvores, abra **Editor** na tela do mundo:
+1. Selecione **🌳 Plantar árvore**, escolha uma espécie e um modo: **Uma árvore por clique**, **Bosque** ou **Floresta densa**.
+2. Clique ou arraste sobre o terreno. O pincel **Raio** define a área quando usa Bosque ou Floresta densa.
+3. Selecione **✕ Apagar árvores** e clique/arraste para retirar tanto as plantadas quanto as árvores automáticas, sem apagar construções ou alterar o bioma.
+4. Use **Desfazer (Ctrl+Z)** ou **Refazer (Ctrl+Y)** para corrigir mudanças.
+5. **Exportar projeto completo (mapa + assets)** gera `aethelgard-projeto-completo.json` com todo o trabalho: relevo, posições das árvores, máscara das árvores removidas e as peças dos modelos 3D. Pode ser reimportado no mundo ou enviado por anexo ao ChatGPT.
+
+Arquivos principais: `src/forest.js` contém as regras de pintura e remoção; `src/assets.js` define as 8 espécies; `tests/forest.test.mjs` valida plantio, remoção, densidade e persistência.
+
+**Observação sobre GitHub Pages**: se a página não abrir, entre em `Settings → Pages → Build and deployment → Source: GitHub Actions` neste repositório. A integração disponível não tem permissão para habilitar Pages por conta própria. Após a ativação, execute **Actions → Publicar Aethelgard 3D no GitHub Pages → Run workflow**. A validação do código no CI funciona mesmo quando Pages está desabilitado.
