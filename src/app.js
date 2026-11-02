@@ -2,11 +2,12 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {loadSeed} from './seed.js';
 import {loadCatalog,createAsset,createScatter} from './assets.js';
+import {TREE_TYPES,TREE_LABELS,isTreeType,autoTreeAt,clearTreeIndexes,plantTrees,eraseTrees} from './forest.js';
 const $=id=>document.getElementById(id),palette=['#317fa0','#a5b777','#4a7750','#918e86','#dfb676','#dce4db','#c9b68d'];
 const names=['Mar','Pradaria','Floresta','Montanhas','Deserto','Neve','Planícies'];
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.82});
 const cube=(g,m,x=0,y=0,z=0)=>{const a=new THREE.Mesh(g,m);a.position.set(x,y,z);return a};
-let world,seed,scene,camera,renderer,controls,terrain,trees,sites,water,hero,avatar,legs=[],arms=[],cloak,ray;
+let world,seed,scene,camera,renderer,controls,terrain,trees,rocks,sites,water,hero,avatar,legs=[],arms=[],cloak,ray;
 let assetCatalog=loadCatalog();
 let mode='explore',tool='inspect',follow=true,path=[],pathIndex=0,keys=new Set,joystick={x:0,y:0},sprintMobile=false,jumpV=0,jumpY=0,step=0;
 let history=[],redoStack=[],pointDown=null,painting=false,changed=false,strokeBefore='',noticeTimer;
@@ -17,7 +18,7 @@ const height=(x,y)=>world.biome[at(x,y)]===0?-.9:world.height[at(x,y)]*.115;
 const valid=(x,y)=>x>=0&&y>=0&&x<world.cols&&y<world.rows&&world.biome[at(x,y)]!==0;
 const pixel=(x,y)=>({x:clamp(Math.round((x-19)/987*(world.cols-1)),0,world.cols-1),y:clamp(Math.round((y-51)/482*(world.rows-1)),0,world.rows-1)});
 function tell(msg){$('message').textContent=msg;$('message').classList.add('show');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('message').classList.remove('show'),2800)}
-function validate(o){if(!o||o.version!==1||o.cols!==168||o.rows!==84||!Array.isArray(o.biome)||!Array.isArray(o.height)||o.biome.length!==14112||o.height.length!==14112||!Array.isArray(o.objects)||!o.spawn||o.objects.length>10000||o.biome.some(n=>!Number.isInteger(n)||n<0||n>6)||o.height.some(n=>!Number.isInteger(n)||n<0||n>100)||!o.objects.every(x=>x&&typeof x.id==='string'&&typeof x.name==='string'&&x.name.length<=100&&['city','castle','port','tree','rock','ruins'].includes(x.type)&&Number.isFinite(x.x)&&Number.isFinite(x.y)))throw Error('JSON inválido: use um mapa Aethelgard v1');return o}
+function validate(o){if(!o||o.version!==1||o.cols!==168||o.rows!==84||!Array.isArray(o.biome)||!Array.isArray(o.height)||o.biome.length!==14112||o.height.length!==14112||!Array.isArray(o.objects)||!o.spawn||o.objects.length>10000||o.biome.some(n=>!Number.isInteger(n)||n<0||n>6)||o.height.some(n=>!Number.isInteger(n)||n<0||n>100)||!o.objects.every(x=>x&&typeof x.id==='string'&&typeof x.name==='string'&&x.name.length<=100&&(['city','castle','port','rock','ruins'].includes(x.type)||isTreeType(x.type))&&Number.isFinite(x.x)&&Number.isFinite(x.y)))throw Error('JSON inválido: use um mapa Aethelgard v1');if(o.clearedTrees!==undefined&&(!Array.isArray(o.clearedTrees)||o.clearedTrees.length>14112||o.clearedTrees.some(i=>!Number.isInteger(i)||i<0||i>=14112)))throw Error('Máscara de floresta inválida');o.clearedTrees??=[];return o}
 function state(){try{localStorage.setItem('aethelgard-editor-v1',JSON.stringify(world))}catch{tell('Sem espaço: exporte o JSON')}$('undo').disabled=!history.length;$('redo').disabled=!redoStack.length;$('status').textContent='Alterações salvas'}
 function commit(before){history.push(before);if(history.length>25)history.shift();redoStack=[];rebuild();state()}
 function undo(){if(!history.length)return;redoStack.push(JSON.stringify(world));world=JSON.parse(history.pop());rebuild();state()}
@@ -32,22 +33,31 @@ function rebuild(){
  for(let y=0;y<world.rows;y++)for(let x=0;x<world.cols;x++){const i=at(x,y),b=world.biome[i],n=((i*1664525+1013904223)>>>3)%37/37;a.setY(i,height(x,y));const v=colors[b].clone().multiplyScalar(.86+.19*n);c.setXYZ(i,v.r,v.g,v.b)}
  a.needsUpdate=true;c.needsUpdate=true;terrain.geometry.computeVertexNormals();terrain.geometry.computeBoundingSphere();
 
- groupClear(trees);groupClear(sites);
- const forests=[],rocky=[];
+
+ groupClear(trees);groupClear(rocks);groupClear(sites);
+ const grouped=Object.fromEntries(TREE_TYPES.map(type=>[type,[]])),rocky=[];
+ const cleared=clearTreeIndexes(world);
  for(let y=1;y<world.rows-1;y++)for(let x=1;x<world.cols-1;x++){
   const i=at(x,y),b=world.biome[i],n=((i*1103515245+12345)>>>2)%1000/1000,p=pos(x,y),h=height(x,y);
-  if(b===2&&n>.29)forests.push([p.x,h,p.z,.52+n*.64]);
-  else if(b===3&&n>.7)rocky.push([p.x,h,p.z,.62+n*.55]);
+  const type=cleared.has(i)?null:autoTreeAt(world,x,y);
+  if(type)grouped[type].push([p.x,h,p.z,.55+n*.37]);
+  if(b===3&&n>.78)rocky.push([p.x,h,p.z,.55+n*.38]);
  }
- trees.add(createScatter('tree',assetCatalog,THREE,forests));
- trees.add(createScatter('rock',assetCatalog,THREE,rocky));
+ // Árvores plantadas usam instancing; um modelo pode ter dezenas de galhos
+ // sem gerar uma draw call para cada cópia dentro do mundo.
  for(const o of world.objects){
-  const c=pixel(o.x,o.y),p=pos(c.x,c.y);
-  const kind=assetCatalog.assets[o.type]?o.type:'ruins';
+  if(isTreeType(o.type)){
+   const c=pixel(o.x,o.y),p=pos(c.x,c.y);
+   grouped[o.type].push([p.x,height(c.x,c.y),p.z,.82]);
+   continue;
+  }
+  const c=pixel(o.x,o.y),p=pos(c.x,c.y),kind=assetCatalog.assets[o.type]?o.type:'ruins';
   const g=createAsset(kind,assetCatalog,THREE).group;
   g.position.set(p.x,height(c.x,c.y),p.z);
   const tag=makeTag(o.name);tag.position.y=kind==='castle'?6:4;g.add(tag);sites.add(g)
  }
+ for(const kind of TREE_TYPES)if(grouped[kind].length)trees.add(createScatter(kind,assetCatalog,THREE,grouped[kind]));
+ if(rocky.length)rocks.add(createScatter('rock',assetCatalog,THREE,rocky));
  trees.visible=$('vegetation').checked;sites.visible=$('places').checked;drawMap();updatePlaces()
 }
 function createHero(){
@@ -90,7 +100,9 @@ function clickWorld(e){const r=$('game').getBoundingClientRect();if(!r.width||!r
 function inspect(p){if(!p)return;const b=world.biome[at(p.x,p.y)];$('selection').textContent=names[b]+' · Altitude '+height(p.x,p.y).toFixed(1)+' · X '+p.x+', Y '+p.y}
 function paint(p){
  if(!p)return false;let changed=false;
- if(['biome','raise','lower','flatten'].includes(tool)){const r=Number($('radius').value),power=Number($('strength').value),target=world.height[at(p.x,p.y)];for(let y=Math.max(0,p.y-r);y<=Math.min(world.rows-1,p.y+r);y++)for(let x=Math.max(0,p.x-r);x<=Math.min(world.cols-1,p.x+r);x++){const d=Math.hypot(x-p.x,y-p.y);if(d>r)continue;const i=at(x,y),before=world.height[i];if(tool==='biome')world.biome[i]=Number($('biome').value);else if(tool==='flatten')world.height[i]=Math.round(before*.82+target*.18);else world.height[i]=clamp(before+(tool==='raise'?1:-1)*Math.max(1,Math.round(power*(1-d/(r+.2)))),0,100);changed=changed||world.height[i]!==before||tool==='biome'}}
+ if(['biome','raise','lower','flatten','plant-tree','remove-tree'].includes(tool)){const r=Number($('radius').value),power=Number($('strength').value),target=world.height[at(p.x,p.y)];for(let y=Math.max(0,p.y-r);y<=Math.min(world.rows-1,p.y+r);y++)for(let x=Math.max(0,p.x-r);x<=Math.min(world.cols-1,p.x+r);x++){const d=Math.hypot(x-p.x,y-p.y);if(d>r)continue;const i=at(x,y),before=world.height[i];if(tool==='biome')world.biome[i]=Number($('biome').value);else if(tool==='flatten')world.height[i]=Math.round(before*.82+target*.18);else world.height[i]=clamp(before+(tool==='raise'?1:-1)*Math.max(1,Math.round(power*(1-d/(r+.2)))),0,100);changed=changed||world.height[i]!==before||tool==='biome'}}
+ else if(tool==='plant-tree'){return plantTrees(world,p,$('treeVariant').value,{radius:Number($('radius').value),density:$('treeDensity').value})>0}
+ else if(tool==='remove-tree'){return eraseTrees(world,p,Number($('radius').value))>0}
  else if(tool==='object'){const type=$('object').value;world.objects.push({id:'new-'+Date.now()+'-'+world.objects.length,type,name:'Novo '+type,x:19+p.x/(world.cols-1)*987,y:51+p.y/(world.rows-1)*482});changed=true}
  else if(tool==='erase'){const before=world.objects.length;world.objects=world.objects.filter(o=>{const c=pixel(o.x,o.y);return Math.hypot(c.x-p.x,c.y-p.y)>3});changed=before!==world.objects.length}
  else if(tool==='spawn'){if(!valid(p.x,p.y)){tell('Escolha um ponto em terra');return false}world.spawn={x:19+p.x/(world.cols-1)*987,y:51+p.y/(world.rows-1)*482};spawnHero();changed=true}
@@ -103,7 +115,9 @@ function events(){
  $('explore').onclick=()=>setMode('explore');$('edit').onclick=()=>setMode('edit');
  for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>{tool=b.dataset.tool;setMode('edit');for(const t of document.querySelectorAll('[data-tool]'))t.classList.toggle('active',t===b)};
  $('undo').onclick=undo;$('redo').onclick=redo;
- $('radius').oninput=e=>$('radiusOut').textContent=e.target.value;$('strength').oninput=e=>$('strengthOut').textContent=e.target.value;
+ $('radius').oninput=e=>$('radiusOut').textContent=e.target.value;
+ $('treeVariant').onchange=()=>{if(tool!=='plant-tree')document.querySelector('[data-tool="plant-tree"]').click()};
+ $('treeDensity').onchange=()=>{if(tool!=='plant-tree')document.querySelector('[data-tool="plant-tree"]').click()};$('strength').oninput=e=>$('strengthOut').textContent=e.target.value;
  $('vegetation').onchange=e=>trees.visible=e.target.checked;$('places').onchange=e=>sites.visible=e.target.checked;
  $('follow').onclick=()=>{if(mode!=='explore')setMode('explore');else follow=!follow;$('follow').classList.toggle('active',follow)};
  $('overview').onclick=()=>{camera.position.set(0,97,135);controls.target.set(0,0,0);follow=false;$('follow').classList.remove('active')};
@@ -142,7 +156,7 @@ async function init(){
  controls=new OrbitControls(camera,$('game'));controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=5;controls.maxDistance=260;controls.maxPolarAngle=1.48;controls.screenSpacePanning=false;
  ray=new THREE.Raycaster;const geo=new THREE.PlaneGeometry(world.worldWidth,world.worldDepth,world.cols-1,world.rows-1);geo.rotateX(-Math.PI/2);geo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(world.cols*world.rows*3),3));terrain=cube(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,side:THREE.DoubleSide}));scene.add(terrain);
  water=cube(new THREE.PlaneGeometry(world.worldWidth+10,world.worldDepth+10),new THREE.MeshPhongMaterial({color:0x2e84a1,transparent:true,opacity:.92,depthWrite:false}),0,-.23,0);water.rotation.x=-Math.PI/2;scene.add(water);
- trees=new THREE.Group;sites=new THREE.Group;scene.add(trees,sites);rebuild();createHero();camera.position.copy(hero.position).add(new THREE.Vector3(0,5.4,10.5));controls.target.copy(hero.position).add(new THREE.Vector3(0,.85,0));controls.update();events();
+ trees=new THREE.Group;rocks=new THREE.Group;sites=new THREE.Group;scene.add(trees,rocks,sites);rebuild();createHero();camera.position.copy(hero.position).add(new THREE.Vector3(0,5.4,10.5));controls.target.copy(hero.position).add(new THREE.Vector3(0,.85,0));controls.update();events();
  const size=()=>{const box=$('view');if(box.clientWidth&&box.clientHeight){renderer.setSize(box.clientWidth,box.clientHeight,false);camera.aspect=box.clientWidth/box.clientHeight;camera.updateProjectionMatrix()}};new ResizeObserver(size).observe($('view'));size();
  let last=performance.now(),mini=0;function frame(now){requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000);last=now;animateHero(dt,now*.001);controls.update();renderer.render(scene,camera);if(now-mini>300){drawMap();mini=now}}requestAnimationFrame(frame);$('status').textContent='Aventureiro pronto para explorar'
 }
