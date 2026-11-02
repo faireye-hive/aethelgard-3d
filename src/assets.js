@@ -93,7 +93,7 @@ function wood(id,xyz,size,color){return P(id,'Tronco '+id,'branch',xyz,size,colo
 const ring=(count,r,y,color,shape='leaf',sx=1.65,sy=1.10)=>{
  const out=[];for(let i=0;i<count;i++){
   const a=i/count*Math.PI*2,phase=i*.91;
-  out.push(foliage('foliage_'+y+'_'+i,[Math.cos(a)*r,y+Math.sin(phase)*.29,Math.sin(a)*r],
+  out.push(foliage('foliage_'+String(y).replace('.','_')+'_'+i,[Math.cos(a)*r,y+Math.sin(phase)*.29,Math.sin(a)*r],
    [sx*(.82+(i%3)*.08),sy*(.9+(i%2)*.12),sx*(.82+(i%2)*.09)],color[i%color.length],shape));
  }return out;
 };
