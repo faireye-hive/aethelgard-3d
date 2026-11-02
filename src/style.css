@@ -3,3 +3,8 @@
 
 /* Mobile editor: keep the terrain configuration available when editing. */
 @media(max-width:680px){#app:has(#edit.active) .side-left{max-height:236px}#app:has(#edit.active) .side-left>label,#app:has(#edit.active) .side-left>select,#app:has(#edit.active) .side-left>input{display:block}#app:has(#edit.active) .side-left>.check{display:flex}#app:has(#edit.active) .side-left .hint{display:none}#app:has(#edit.active) .side-left #radius,#app:has(#edit.active) .side-left #strength{display:block}}
+
+/* Atalho para o editor compartilhado de assets. */
+.top-actions .asset-studio-link{display:inline-flex;align-items:center;justify-content:center;background:#345444;color:#f7dfa8;border:1px solid #bc9b6b;border-radius:7px;padding:9px 12px;font-weight:700;text-decoration:none;white-space:nowrap}
+.top-actions .asset-studio-link:focus-visible{outline:2px solid #e3c38e;outline-offset:2px}
+@media(max-width:680px){.top-actions .asset-studio-link{padding:7px;font-size:12px}.top-actions .asset-studio-link span{display:none}}
