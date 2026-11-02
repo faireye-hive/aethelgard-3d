@@ -30,11 +30,23 @@ jobs:
           node --check src/asset-editor.js
           node --test tests/assets.test.mjs tests/forest.test.mjs
           node --input-type=module -e "import('./src/seed.js').then(async m => { const w = await m.loadSeed(); if(w.biome.length!==14112||w.height.length!==14112||w.objects.length<1) process.exit(1); console.log('Mapa carregado', w.cols, w.rows) })"
+      - name: Verificar se GitHub Pages foi habilitado
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${{ github.repository }}/pages" > /dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::GitHub Pages está desabilitado. Vá em Settings > Pages > Build and deployment e escolha GitHub Actions. Depois execute o workflow novamente."
+          fi
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
+        if: steps.pages.outputs.enabled == 'true'
       - uses: actions/upload-pages-artifact@v3
+        if: steps.pages.outputs.enabled == 'true'
         with:
           path: .
       - id: deployment
+        if: steps.pages.outputs.enabled == 'true'
         uses: actions/deploy-pages@v4
