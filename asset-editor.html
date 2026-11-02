@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111b1a">
+  <meta name="description" content="Crie e personalize todos os modelos de Aethelgard em 3D.">
+  <title>Estúdio de Assets • Aethelgard</title>
+  <link rel="stylesheet" href="src/asset-editor.css">
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div class="studio">
+  <header class="topbar">
+    <div class="logo"><span class="logo-icon">✦</span><span>AETHELGARD <small>ESTÚDIO DE ASSETS 3D</small></span></div>
+    <div class="top-actions">
+      <button id="undo" title="Desfazer (Ctrl+Z)" disabled>↶ <span>Desfazer</span></button>
+      <button id="redo" title="Refazer (Ctrl+Y)" disabled>↷ <span>Refazer</span></button>
+      <a class="world-link" href="./index.html">↗ <span>Explorar mundo</span></a>
+    </div>
+  </header>
+  <div class="workspace">
+    <aside class="assets-nav">
+      <div class="section-tag">BIBLIOTECA / 7 MODELOS</div>
+      <h2>Seus assets</h2>
+      <p>Escolha um objeto para abrir seu editor individual.</p>
+      <nav id="assetList" aria-label="Tipos de assets"></nav>
+      <div class="help-card"><b>💡 Como funciona?</b><br>Edite o asset, salve e volte ao mundo. Todos os objetos desse tipo usarão o mesmo modelo.</div>
+    </aside>
+
+    <section class="viewport">
+      <div class="viewport-head">
+        <div><div class="eyebrow">PRÉVIA 3D EM TEMPO REAL</div><h1 id="assetTitle">Árvore</h1><span id="sizeText">Carregando medidas...</span></div>
+        <div class="view-buttons">
+          <button id="resetCamera" title="Centralizar câmera">◎ Centralizar</button>
+          <button id="toggleGrid" class="selected">▦ Grade</button>
+          <button id="toggleWire">◇ Arestas</button>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="preview" aria-label="Prévia 3D do asset selecionado. Arraste para girar e use a roda para zoom."></canvas>
+        <div class="viewport-hint">Arraste para girar • Roda para zoom • Clique em uma peça para editar</div>
+        <div class="corner-badge" id="previewBadge">MODELO PROCEDURAL</div>
+      </div>
+      <div class="viewport-foot">
+        <div class="foot-label" id="partInfo">Selecione uma peça ou use a lista ao lado.</div>
+        <label class="toggle"><input id="animate" type="checkbox"> Animar personagem</label>
+      </div>
+      <div class="export-panel">
+        <div class="export-heading"><div><div class="eyebrow">SUAS ALTERAÇÕES</div><h2>Exportar para o projeto</h2><p>Salva no navegador automaticamente. Envie o JSON aqui no chat para eu integrar as edições permanentemente ao código.</p></div><span class="saved" id="saveStatus">● Salvo neste navegador</span></div>
+        <div class="export-buttons">
+          <button id="exportJson" class="primary">⬇ Exportar catálogo JSON</button>
+          <button id="exportJs">⌘ Exportar código JavaScript</button>
+          <button id="importButton">↥ Importar alterações</button>
+          <input id="importFile" type="file" accept=".json,application/json" hidden>
+        </div>
+        <div class="code-box">
+          <div class="code-header"><span id="codeTitle">JSON pronto para enviar</span><div><button id="showJson">Ver JSON</button><button id="showJs">Ver JS</button><button id="copyCode">Copiar</button></div></div>
+          <textarea id="codeOutput" spellcheck="false" aria-label="Código de todos os assets" readonly></textarea>
+        </div>
+      </div>
+    </section>
+
+    <aside class="inspector">
+      <div class="section-tag">INSPECTOR</div>
+      <h2>Propriedades</h2>
+      <p class="hint">As mudanças aparecem na prévia e são aplicadas aos modelos do jogo.</p>
+      <section class="controls">
+        <h3>◈ Modelo inteiro</h3>
+        <label class="field-title" for="modelScale">Tamanho geral <output id="scaleRead">0.55×</output></label>
+        <input type="range" min=".10" max="4" step=".05" id="modelScale">
+        <div class="wide-field"><label for="scaleNumber">Escala exata</label><input type="number" id="scaleNumber" min=".05" max="20" step=".05"></div>
+        <div class="triple"><label>Largura (X)<input id="axisX" type="number" min=".05" max="10" step=".05"></label><label>Altura (Y)<input id="axisY" type="number" min=".05" max="10" step=".05"></label><label>Profundidade (Z)<input id="axisZ" type="number" min=".05" max="10" step=".05"></label></div>
+      </section>
+      <section class="controls">
+        <div class="split"><h3>▤ Peças do modelo</h3><span id="partCount" class="tiny"></span></div>
+        <div class="part-list" id="partList" role="listbox" aria-label="Peças 3D do modelo"></div>
+        <div class="part-actions"><button id="newPart">+ Nova peça</button><button id="clonePart">⧉ Duplicar</button><button id="deletePart">✕ Excluir</button></div>
+      </section>
+      <section class="controls" id="partInspector">
+        <h3>◈ Peça selecionada</h3>
+        <div class="wide-field"><label for="partLabel">Nome da peça</label><input type="text" id="partLabel" maxlength="60"></div>
+        <div class="split-fields">
+          <label>Formato<select id="partShape"><option value="box">Cubo / bloco</option><option value="cone">Cone</option><option value="cylinder">Cilindro</option><option value="sphere">Esfera</option><option value="rock">Rocha irregular</option></select></label>
+          <label>Cor<input id="partColor" type="color"></label>
+        </div>
+        <label class="wide-field" id="pivotRow">Movimento / encaixe<select id="partPivot"><option value="">Corpo / fixo</option><option value="armL">Braço esquerdo</option><option value="armR">Braço direito</option><option value="legL">Perna esquerda</option><option value="legR">Perna direita</option></select></label>
+        <h4>Posição da peça</h4><div class="triple" id="positionControls"><label>X<input type="number" data-axis="0" min="-30" max="30" step=".05"></label><label>Y<input type="number" data-axis="1" min="-30" max="30" step=".05"></label><label>Z<input type="number" data-axis="2" min="-30" max="30" step=".05"></label></div>
+        <h4>Dimensões da peça</h4><div class="triple" id="sizeControls"><label>X<input type="number" data-axis="0" min=".02" max="30" step=".05"></label><label>Y<input type="number" data-axis="1" min=".02" max="30" step=".05"></label><label>Z<input type="number" data-axis="2" min=".02" max="30" step=".05"></label></div>
+        <h4>Rotação (graus)</h4><div class="triple" id="rotationControls"><label>X<input type="number" data-axis="0" min="-360" max="360" step="5"></label><label>Y<input type="number" data-axis="1" min="-360" max="360" step="5"></label><label>Z<input type="number" data-axis="2" min="-360" max="360" step="5"></label></div>
+      </section>
+      <div class="restore-buttons"><button id="resetAsset">⟲ Restaurar este modelo</button><button id="resetAll">⚠ Restaurar todos</button></div>
+    </aside>
+  </div>
+  <footer><span>✦ AETHELGARD ASSET STUDIO · V1</span><span id="status" role="status" aria-live="polite">Carregando editor...</span><span>THREE.JS · EDITOR DE MODELOS</span></footer>
+</div>
+<script type="module" src="src/asset-editor.js"></script>
+</body>
+</html>
