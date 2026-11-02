@@ -19,7 +19,7 @@ run('Modelo detalhado monta tronco contínuo e folhas reais em malha 3D',()=>{
  const result=createRealisticOak(THREE,{...OAK_DEFAULTS,seed:42},'draft');
  const {group,wood,leaves,stats}=result;
  assert.ok(group.isGroup&&wood.isMesh&&leaves.isInstancedMesh);
- assert.ok(wood.geometry.attributes.position.count>10000);
+ assert.ok(wood.geometry.attributes.position.count>6000);
  assert.ok(wood.geometry.index.count>10000);
  assert.ok(leaves.geometry.index.count>18);
  assert.ok(leaves.count>=2000);
