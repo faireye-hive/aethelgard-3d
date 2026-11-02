@@ -47,6 +47,13 @@ check('árvores automáticas podem ser apagadas sem mudar o bioma',()=>{
  assert.ok(clearTreeIndexes(w).has(index));assert.equal(hasTree(w,found.x,found.y),false);
  assert.equal(w.biome[index],2);
 });
+check('plantar sobre bosque automático substitui a árvore anterior sem sobreposição',()=>{
+ const w=world();let target;
+ for(let y=5;y<35&&!target;y++)for(let x=5;x<70;x++)if(autoTreeAt(w,x,y)){target={x,y};break}
+ assert.ok(target);assert.equal(plantTrees(w,target,'tree_cherry'),1);
+ assert.ok(clearTreeIndexes(w).has(target.y*w.cols+target.x));
+ assert.equal(w.objects.filter(o=>o.type==='tree_cherry').length,1);
+});
 check('máscara de remoção é exportada em JSON e permanece na importação',()=>{
  const w=world(),p={x:17,y:22};eraseTrees(w,p,4);
  const loaded=JSON.parse(JSON.stringify(w));assert.deepEqual(loaded.clearedTrees,w.clearedTrees);
