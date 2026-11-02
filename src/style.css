@@ -8,3 +8,10 @@
 .top-actions .asset-studio-link{display:inline-flex;align-items:center;justify-content:center;background:#345444;color:#f7dfa8;border:1px solid #bc9b6b;border-radius:7px;padding:9px 12px;font-weight:700;text-decoration:none;white-space:nowrap}
 .top-actions .asset-studio-link:focus-visible{outline:2px solid #e3c38e;outline-offset:2px}
 @media(max-width:680px){.top-actions .asset-studio-link{padding:7px;font-size:12px}.top-actions .asset-studio-link span{display:none}}
+
+/* Ferramentas específicas de plantio, seleção de espécie e densidade */
+.tree-settings{margin:12px 0 17px;padding:11px;border:1px solid #64765b;border-radius:9px;background:#1d392f}
+.tree-settings label:first-child{margin-top:0;color:#f2d59d;font-weight:800}
+.tree-settings .tree-asset-link{display:block;color:#edc890;text-align:center;line-height:1.4;margin-top:11px;padding:8px;text-decoration:none;border-radius:7px;border:1px solid #8a7a50;background:#38503b}
+.tree-settings .tree-asset-link:hover{background:#4b5d45}
+@media(max-width:680px){#app:has(#edit.active) .side-left .tree-settings{display:block}#app:has(#edit.active) .side-left .tree-settings label,#app:has(#edit.active) .side-left .tree-settings select{display:block}}
