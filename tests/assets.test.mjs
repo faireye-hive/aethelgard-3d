@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {ASSET_ORDER,ASSET_NAMES,VERSION,DEFAULT_ASSETS,defaultCatalog,validateCatalog,createAsset,cloneCatalog} from '../src/assets.js';
+import {TREE_TYPES} from '../src/forest.js';
 
 const check=(label,fn)=>{fn();console.log('✓ '+label)};
-check('7 assets criados (personagem, árvore, pedra, castelo, cidade, porto, ruínas)',()=>{
- assert.equal(ASSET_ORDER.length,7);
+check('14 assets criados (personagem, oito espécies de árvores, pedra e construções)',()=>{
+ assert.equal(ASSET_ORDER.length,14);
+ assert.equal(TREE_TYPES.length,8);
  for(const k of ASSET_ORDER)assert.ok(ASSET_NAMES[k]&&DEFAULT_ASSETS[k]);
 });
 check('catálogo padrão válido; cada peça tem identificador único',()=>{
@@ -50,11 +52,20 @@ check('geometria compartilhada gera as peças e pivôs animáveis',()=>{
  assert.equal(a.group.scale.constructor,Coordinates);
  const tree=createAsset('tree',catalog,THREE);
  assert.equal(Object.keys(tree.meshes).length,catalog.assets.tree.parts.length);
+ for(const kind of TREE_TYPES)assert.ok(catalog.assets[kind].parts.length>=3);
 });
 check('o mundo usa o catálogo de assets e contém link para editor',()=>{
  const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
  assert.ok(app.includes("createScatter('tree'")&&app.includes("createAsset('player'")&&app.includes("assetCatalog=loadCatalog()"));
  assert.ok(html.includes('href="./asset-editor.html"'));
+});
+
+check('catálogos antigos recebem as novas espécies, preservando edição prévia',()=>{
+ const old=defaultCatalog();old.assets.tree.scale=1.23;
+ for(const key of TREE_TYPES.slice(1))delete old.assets[key];
+ const upgraded=validateCatalog(old);
+ assert.equal(upgraded.assets.tree.scale,1.23);
+ for(const key of TREE_TYPES)assert.ok(upgraded.assets[key]);
 });
 console.log('Catálogo de assets: todos os testes passaram.');
