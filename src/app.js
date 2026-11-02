@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {loadSeed} from './seed.js';
-import {loadCatalog,createAsset,createScatter} from './assets.js';
+import {loadCatalog,saveCatalog,validateCatalog,createAsset,createScatter} from './assets.js';
 import {TREE_TYPES,TREE_LABELS,isTreeType,autoTreeAt,clearTreeIndexes,plantTrees,eraseTrees} from './forest.js';
 const $=id=>document.getElementById(id),palette=['#317fa0','#a5b777','#4a7750','#918e86','#dfb676','#dce4db','#c9b68d'];
 const names=['Mar','Pradaria','Floresta','Montanhas','Deserto','Neve','Planícies'];
@@ -122,7 +122,20 @@ function events(){
  $('follow').onclick=()=>{if(mode!=='explore')setMode('explore');else follow=!follow;$('follow').classList.toggle('active',follow)};
  $('overview').onclick=()=>{camera.position.set(0,97,135);controls.target.set(0,0,0);follow=false;$('follow').classList.remove('active')};
  $('export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(world,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='aethelgard-world.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
- $('import').onclick=()=>$('file').click();$('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.size>3000000){tell('JSON muito grande');return}try{const w=validate(JSON.parse(await f.text()));history.push(JSON.stringify(world));redoStack=[];world=w;spawnHero();rebuild();state();tell('Mapa importado')}catch(err){tell(err.message)}e.target.value=''};
+ $('exportProject').onclick=()=>{
+  const payload={format:'aethelgard-project',version:1,world,assets:assetCatalog};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
+  const a=document.createElement('a');a.href=url;a.download='aethelgard-projeto-completo.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);tell('Projeto completo exportado: mapa e modelos 3D');
+ };
+ $('import').onclick=()=>$('file').click();$('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.size>3000000){tell('JSON muito grande');return}try{const parsed=JSON.parse(await f.text());
+ const packageFile=parsed?.format==='aethelgard-project'&&parsed.version===1;
+ const w=validate(packageFile?parsed.world:parsed);
+ const newCatalog=packageFile?validateCatalog(parsed.assets):null;
+ history.push(JSON.stringify(world));redoStack=[];world=w;
+ if(newCatalog){assetCatalog=saveCatalog(newCatalog);createHero();}
+ else spawnHero();
+ rebuild();state();tell(packageFile?'Mapa e modelos 3D importados':'Mapa importado')}catch(err){tell(err.message)}e.target.value=''};
  $('reset').onclick=()=>{if(!confirm('Restaurar o mundo inicial? Exporte o mapa editado antes.'))return;history.push(JSON.stringify(world));redoStack=[];world=structuredClone(seed);spawnHero();rebuild();state()};
  $('list').onchange=e=>{const o=world.objects.find(v=>v.id===e.target.value);$('name').disabled=!o;$('rename').disabled=!o;$('name').value=o?.name||'';if(o){const c=pixel(o.x,o.y);focus(c.x,c.y);inspect(c)}};
  $('rename').onclick=()=>{const o=world.objects.find(v=>v.id===$('list').value),name=$('name').value.trim();if(!o||!name)return;const before=JSON.stringify(world);o.name=name;commit(before)};
