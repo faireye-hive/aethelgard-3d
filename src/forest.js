@@ -34,6 +34,7 @@ export function hasTree(world,x,y){
 export function plantTrees(world,p,kind,{radius=1,density='single'}={}){
  if(!isTreeType(kind))return 0;
  if(world.objects.length>=10000)return 0;
+ const cleared=clearTreeIndexes(world);
  const placed=new Set(world.objects.filter(o=>isTreeType(o.type)).map(o=>{
   const x=Math.round((o.x-19)/987*(world.cols-1)),y=Math.round((o.y-51)/482*(world.rows-1));return y*world.cols+x;
  }));
@@ -56,8 +57,9 @@ export function plantTrees(world,p,kind,{radius=1,density='single'}={}){
    type:kind,name:TREE_LABELS[kind],
    x:19+x/(world.cols-1)*987,y:51+y/(world.rows-1)*482
   });
-  placed.add(i);count++;
+  placed.add(i);if(autoTreeAt(world,x,y))cleared.add(i);count++;
  }
+ if(count)world.clearedTrees=[...cleared].sort((a,b)=>a-b);
  return count;
 }
 export function eraseTrees(world,p,radius=2){
