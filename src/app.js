@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {loadSeed} from './seed.js';
 import {loadCatalog,saveCatalog,validateCatalog,createAsset,createScatter} from './assets.js';
-import {TREE_TYPES,TREE_LABELS,isTreeType,autoTreeAt,clearTreeIndexes,plantTrees,eraseTrees} from './forest.js';
+import {TREE_TYPES,TREE_LABELS,isTreeType,autoTreeAt,clearTreeIndexes,plantTrees,eraseTrees,REALISTIC_OAK,MAX_REALISTIC_OAKS} from './forest.js';
+import {createRealisticOak,getOakOptions,OAK_STORAGE_KEY} from './oak-realistic.js';
 const $=id=>document.getElementById(id),palette=['#317fa0','#a5b777','#4a7750','#918e86','#dfb676','#dce4db','#c9b68d'];
 const names=['Mar','Pradaria','Floresta','Montanhas','Deserto','Neve','Planícies'];
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.82});
@@ -35,7 +36,7 @@ function rebuild(){
 
 
  groupClear(trees);groupClear(rocks);groupClear(sites);
- const grouped=Object.fromEntries(TREE_TYPES.map(type=>[type,[]])),rocky=[];
+ const grouped=Object.fromEntries(TREE_TYPES.map(type=>[type,[]])),rocky=[],realisticOaks=[];
  const cleared=clearTreeIndexes(world);
  for(let y=1;y<world.rows-1;y++)for(let x=1;x<world.cols-1;x++){
   const i=at(x,y),b=world.biome[i],n=((i*1103515245+12345)>>>2)%1000/1000,p=pos(x,y),h=height(x,y);
@@ -48,7 +49,8 @@ function rebuild(){
  for(const o of world.objects){
   if(isTreeType(o.type)){
    const c=pixel(o.x,o.y),p=pos(c.x,c.y);
-   grouped[o.type].push([p.x,height(c.x,c.y),p.z,.82]);
+   if(o.type===REALISTIC_OAK)realisticOaks.push([p.x,height(c.x,c.y),p.z]);
+   else grouped[o.type].push([p.x,height(c.x,c.y),p.z,.82]);
    continue;
   }
   const c=pixel(o.x,o.y),p=pos(c.x,c.y),kind=assetCatalog.assets[o.type]?o.type:'ruins';
@@ -58,6 +60,14 @@ function rebuild(){
  }
  for(const kind of TREE_TYPES)if(grouped[kind].length)trees.add(createScatter(kind,assetCatalog,THREE,grouped[kind]));
  if(rocky.length)rocks.add(createScatter('rock',assetCatalog,THREE,rocky));
+ if(realisticOaks.length){
+  const template=createRealisticOak(THREE,getOakOptions(),'world').group;
+  realisticOaks.slice(0,MAX_REALISTIC_OAKS).forEach(([x,y,z],i)=>{
+   const instance=i===0?template:template.clone(true);
+   instance.position.set(x,y,z);
+   trees.add(instance);
+  });
+ }
  trees.visible=$('vegetation').checked;sites.visible=$('places').checked;drawMap();updatePlaces()
 }
 function createHero(){
@@ -153,7 +163,8 @@ function events(){
  $('jump').onclick=()=>{if(jumpY===0)jumpV=6.4};$('run').onclick=()=>{sprintMobile=!sprintMobile;$('run').classList.toggle('active',sprintMobile)};
 
  // Se outro separador editar o catálogo, reflete as alterações no jogo.
- window.addEventListener('storage',e=>{if(e.key==='aethelgard-assets-v1'){
+ window.addEventListener('storage',e=>{if(e.key===OAK_STORAGE_KEY){rebuild();tell('Carvalho realista atualizado');return}
+ if(e.key==='aethelgard-assets-v1'){
   const prev=hero?.position.clone(),yaw=hero?.rotation.y||0;
   assetCatalog=loadCatalog();rebuild();createHero();
   if(prev){hero.position.copy(prev);hero.rotation.y=yaw;}
